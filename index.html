@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Portfolio with Matrix Rain</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: rgb(127, 4, 241);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            perspective: 1000px;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            z-index: -1;
+        }
+        
+        .portfolio {
+            color: white;
+            text-align: center;
+            transform-style: preserve-3d;
+        }
+        
+        .portfolio h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .portfolio p {
+            font-size: 1.5rem;
+            max-width: 600px;
+            margin: auto;
+        }
+        
+        .portfolio a {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            color: white;
+            text-decoration: none;
+            border: 2px solid white;
+            border-radius: 5px;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        .portfolio a:hover {
+            background: white;
+            color: black;
+        }
+        
+        .gallery {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotateY(0deg);
+            transform-style: preserve-3d;
+            perspective: 1200px;
+            width: 80vw;
+            height: 60vh;
+            animation: spin 10s infinite linear;
+        }
+        
+        .gallery .card {
+            position: absolute;
+            width: 200px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid white;
+            border-radius: 10px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            transform-origin: center;
+            cursor: pointer;
+        }
+        
+        .gallery .card:nth-child(1) {
+            transform: rotateY(0deg) translateZ(300px);
+        }
+        
+        .gallery .card:nth-child(2) {
+            transform: rotateY(60deg) translateZ(300px);
+        }
+        
+        .gallery .card:nth-child(3) {
+            transform: rotateY(120deg) translateZ(300px);
+        }
+        
+        .gallery .card:nth-child(4) {
+            transform: rotateY(180deg) translateZ(300px);
+        }
+        
+        .gallery .card:nth-child(5) {
+            transform: rotateY(240deg) translateZ(300px);
+        }
+        
+        .gallery .card:nth-child(6) {
+            transform: rotateY(300deg) translateZ(300px);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .modal h2 {
+            margin-bottom: 1rem;
+        }
+        
+        .modal p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal button {
+            padding: 0.5rem 1rem;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .modal button:hover {
+            background: lime;
+        }
+        
+        @keyframes spin {
+            from {
+                transform: translate(-50%, -50%) rotateY(0deg);
+            }
+            to {
+                transform: translate(-50%, -50%) rotateY(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="matrixCanvas"></canvas>
+
+    <div class="portfolio">
+        <h1>Dev Parth</h1>
+        <p>Welcome to my interactive 3D portfolio. Explore my projects, skills, and achievements below!</p>
+        <a href="#" id="viewProjects">View Projects</a>
+    </div>
+
+    <div class="gallery" id="gallery">
+        <div class="card" data-project="1">Project 1</div>
+        <div class="card" data-project="2">Project 2</div>
+        <div class="card" data-project="3">Project 3</div>
+        <div class="card" data-project="4">Project 4</div>
+        <div class="card" data-project="5">Project 5</div>
+        <div class="card" data-project="6">Project 6</div>
+    </div>
+
+    <div class="modal" id="modal">
+        <h2 id="modalTitle">Project Title</h2>
+        <p id="modalDescription">Project description goes here. This is a detailed view of the selected project.</p>
+        <button id="closeModal">Close</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const fontSize = 16;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()';
+
+        let colorPalette = ['lime', 'cyan', 'magenta', 'yellow', 'orange '];
+        let currentColor = 'lime';
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.shadowColor = currentColor;
+            ctx.shadowBlur = 10;
+
+            ctx.fillStyle = currentColor;
+            ctx.font = `${fontSize}px monospace`;
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+
+                drops[i]++;
+            }
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * canvas.height / fontSize;
+            }
+        }
+
+        function changeRainColor(event) {
+            currentColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+        }
+
+        const viewProjectsButton = document.getElementById('viewProjects');
+        const gallery = document.getElementById('gallery');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDescription = document.getElementById('modalDescription');
+        const closeModal = document.getElementById('closeModal');
+
+        const projectDetails = {
+            1: {
+                title: 'Project 1',
+                description: 'This is an amazing project about AI.'
+            },
+            2: {
+                title: 'Project 2',
+                description: 'A creative project showcasing 3D design.'
+            },
+            3: {
+                title: 'Project 3',
+                description: 'A unique project focusing on interactivity.'
+            },
+            4: {
+                title: 'Project 4',
+                description: 'An advanced project combining tech and art.'
+            },
+            5: {
+                title: 'Project 5',
+                description: 'A futuristic project with cutting-edge concepts.'
+            },
+            6: {
+                title: 'Project 6',
+                description: 'A detailed project solving real-world problems.'
+            }
+        };
+
+        gallery.addEventListener('click', (e) => {
+            if (e.target.classList.contains('card')) {
+                const projectId = e.target.dataset.project;
+                const project = projectDetails[projectId];
+
+                modalTitle.textContent = project.title;
+                modalDescription.textContent = project.description;
+
+                modal.style.display = 'block';
+            }
+        });
+
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        viewProjectsButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            gallery.style.display = 'flex';
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('click', changeRainColor);
+        setInterval(draw, 50);
+    </script>
+</body>
+
+</html>
